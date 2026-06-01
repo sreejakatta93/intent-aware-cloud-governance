@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beyond CPU Thresholds: Using Intent-Fit Score to Detect Cloud Workload Misalignment</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Georgia", "Times New Roman", serif;
+      font-size: 18px;
+      line-height: 1.8;
+      color: #292929;
+      background: #ffffff;
+    }
+
+    /* ── Hero ──────────────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, #1A1A2E 0%, #2D1B69 60%, #4C1D95 100%);
+      padding: 64px 24px 56px;
+      text-align: center;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: rgba(167,139,250,0.25);
+      color: #C4B5FD;
+      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-family: "Georgia", serif;
+      font-size: clamp(26px, 5vw, 42px);
+      font-weight: 700;
+      color: #F9FAFB;
+      line-height: 1.25;
+      max-width: 820px;
+      margin: 0 auto 24px;
+    }
+
+    .hero-subtitle {
+      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      color: #C4B5FD;
+      max-width: 580px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+
+    .author-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .author-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7C3AED, #A78BFA);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Inter", sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .author-info {
+      text-align: left;
+    }
+
+    .author-name {
+      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #F9FAFB;
+    }
+
+    .author-meta {
+      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+      font-size: 12px;
+      color: #A78BFA;
+    }
+
+    /* ── Main layout ────────────────────────────────────────────────── */
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .article-body {
+      padding: 48px 0 80px;
+    }
+
+    /* ── Typography ─────────────────────────────────────────────────── */
+    p {
+      margin-bottom: 24px;
+      color: #292929;
+    }
+
+    h2 {
+      font-family: "Georgia", serif;
+      font-size: clamp(20px, 3.5vw, 26px);
+      font-weight: 700;
+      color: #1A1A2E;
+      margin: 52px 0 16px;
+      line-height: 1.3;
+    }
+
+    h3 {
+      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: #1A1A2E;
+      margin: 32px 0 12px;
+      letter-spacing: -0.01em;
+    }
+
+    strong { color: #1A1A2E; font-weight: 700; }
+
+    em { font-style: italic; color: #4B5563; }
+
+    /* ── Section number pill ────────────────────────────────────────── */
+    .section-num {
+      display: inline-block;
+      background: #7C3AED;
+      color: white;
+      font-family: "Inter", sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 2px 9px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      vertical-align: middle;
+    }
+
+    /* ── Callout boxes ──────────────────────────────────────────────── */
+    .callout {
+      border-left: 4px solid #7C3AED;
+      background: #FAF5FF;
+      padding: 20px 24px;
+      margin: 32px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .callout p { margin-bottom: 0; color: #4C1D95; font-style: italic; font-size: 17px; }
+
+    .callout-insight {
+      background: #EFF6FF;
+      border-left: 4px solid #2563EB;
+      border-radius: 0 8px 8px 0;
+      padding: 20px 24px;
+      margin: 32px 0;
+    }
+
+    .callout-insight .callout-title {
+      font-family: "Inter", sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #1D4ED8;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .callout-insight p { margin-bottom: 0; color: #1E3A8A; font-size: 16px; }
+
+    .callout-warn {
+      background: #FFFBEB;
+      border-left: 4px solid #D97706;
+      border-radius: 0 8px 8px 0;
+      padding: 20px 24px;
+      margin: 32px 0;
+    }
+
+    .callout-warn .callout-title {
+      font-family: "Inter", sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #B45309;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .callout-warn p { margin-bottom: 0; color: #78350F; font-size: 16px; }
+
+    /* ── Resource box ───────────────────────────────────────────────── */
+    .resource-box {
+      background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+      border: 1px solid #DDD6FE;
+      border-radius: 12px;
+      padding: 28px 28px 24px;
+      margin: 40px 0;
+    }
+
+    .resource-box-title {
+      font-family: "Inter", sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #7C3AED;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .resource-links {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .resource-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      background: white;
+      border: 1px solid #DDD6FE;
+      border-radius: 8px;
+      padding: 12px 16px;
+      transition: border-color 0.15s;
+    }
+
+    .resource-link:hover { border-color: #7C3AED; }
+
+    .resource-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .resource-link-text { flex: 1; }
+
+    .resource-link-label {
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1A1A2E;
+      display: block;
+    }
+
+    .resource-link-desc {
+      font-family: "Inter", sans-serif;
+      font-size: 11px;
+      color: #6B7280;
+    }
+
+    /* ── Code / formula ─────────────────────────────────────────────── */
+    code {
+      font-family: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+      font-size: 14px;
+      background: #F3F4F6;
+      color: #7C3AED;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .formula-block {
+      background: #1A1A2E;
+      border-radius: 10px;
+      padding: 22px 28px;
+      margin: 28px 0;
+      text-align: center;
+    }
+
+    .formula-block code {
+      background: transparent;
+      color: #A78BFA;
+      font-size: 16px;
+      padding: 0;
+    }
+
+    .formula-block .formula-label {
+      font-family: "Inter", sans-serif;
+      font-size: 11px;
+      color: #6B7280;
+      margin-top: 8px;
+      display: block;
+    }
+
+    /* ── Metric cards ───────────────────────────────────────────────── */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      margin: 32px 0;
+    }
+
+    .metric-card {
+      background: white;
+      border: 1px solid #E5E7EB;
+      border-radius: 10px;
+      padding: 18px 16px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .metric-value {
+      font-family: "Inter", sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: #7C3AED;
+      display: block;
+      line-height: 1.1;
+    }
+
+    .metric-label {
+      font-family: "Inter", sans-serif;
+      font-size: 11px;
+      color: #6B7280;
+      margin-top: 5px;
+      font-weight: 500;
+    }
+
+    .metric-context {
+      font-family: "Inter", sans-serif;
+      font-size: 10px;
+      color: #9CA3AF;
+      margin-top: 3px;
+    }
+
+    /* ── Comparison table ───────────────────────────────────────────── */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 28px 0;
+      font-family: "Inter", sans-serif;
+      font-size: 14px;
+    }
+
+    .compare-table th {
+      background: #1A1A2E;
+      color: #F9FAFB;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.03em;
+    }
+
+    .compare-table th:first-child { border-radius: 8px 0 0 0; }
+    .compare-table th:last-child  { border-radius: 0 8px 0 0; }
+
+    .compare-table td {
+      padding: 11px 16px;
+      border-bottom: 1px solid #F3F4F6;
+      color: #374151;
+      vertical-align: top;
+    }
+
+    .compare-table tr:nth-child(even) td { background: #FAFAFA; }
+
+    .compare-table .win { color: #059669; font-weight: 700; }
+    .compare-table .lose { color: #DC2626; }
+
+    /* ── IFS sub-scores ─────────────────────────────────────────────── */
+    .score-bar-row {
+      margin: 8px 0;
+    }
+
+    .score-bar-label {
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      color: #374151;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .score-bar-weight {
+      color: #9CA3AF;
+      font-size: 12px;
+    }
+
+    .score-bar-track {
+      height: 8px;
+      background: #E5E7EB;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #7C3AED, #A78BFA);
+    }
+
+    /* ── Threshold band ─────────────────────────────────────────────── */
+    .threshold-band {
+      background: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      border-radius: 10px;
+      padding: 20px 22px;
+      margin: 24px 0;
+    }
+
+    .threshold-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid #F3F4F6;
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+    }
+
+    .threshold-row:last-child { border-bottom: none; }
+
+    .threshold-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .threshold-range { color: #6B7280; font-size: 12px; min-width: 80px; }
+    .threshold-label { color: #374151; font-weight: 600; flex: 1; }
+    .threshold-action { color: #9CA3AF; font-size: 12px; }
+
+    /* ── Pipeline diagram ───────────────────────────────────────────── */
+    .pipeline {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin: 28px 0;
+      overflow-x: auto;
+    }
+
+    .pipeline-step {
+      flex: 1;
+      min-width: 110px;
+      background: #F5F3FF;
+      border: 1px solid #DDD6FE;
+      border-radius: 8px;
+      padding: 14px 12px;
+      text-align: center;
+      position: relative;
+    }
+
+    .pipeline-step + .pipeline-step {
+      margin-left: 8px;
+    }
+
+    .pipeline-step-icon { font-size: 22px; display: block; margin-bottom: 6px; }
+
+    .pipeline-step-title {
+      font-family: "Inter", sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: #4C1D95;
+      margin-bottom: 4px;
+    }
+
+    .pipeline-step-desc {
+      font-family: "Inter", sans-serif;
+      font-size: 11px;
+      color: #6D28D9;
+      line-height: 1.4;
+    }
+
+    .pipeline-arrow {
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+      color: #A78BFA;
+      font-size: 18px;
+      font-weight: 300;
+      flex-shrink: 0;
+    }
+
+    /* ── Companion box ──────────────────────────────────────────────── */
+    .companion-box {
+      background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+      border: 1px solid #BBF7D0;
+      border-radius: 12px;
+      padding: 28px;
+      margin: 48px 0;
+    }
+
+    .companion-title {
+      font-family: "Inter", sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #059669;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .companion-box h3 {
+      font-family: "Georgia", serif;
+      font-size: 19px;
+      color: #064E3B;
+      margin: 0 0 12px;
+    }
+
+    .companion-box p {
+      font-size: 15px;
+      color: #065F46;
+      margin-bottom: 16px;
+    }
+
+    .companion-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 20px;
+    }
+
+    .companion-list li {
+      font-family: "Inter", sans-serif;
+      font-size: 14px;
+      color: #047857;
+      padding: 4px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .companion-list li::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: #10B981;
+      font-weight: 700;
+    }
+
+    .btn {
+      display: inline-block;
+      background: #059669;
+      color: white;
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 22px;
+      border-radius: 8px;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Divider ────────────────────────────────────────────────────── */
+    .divider {
+      border: none;
+      border-top: 1px solid #E5E7EB;
+      margin: 48px 0;
+    }
+
+    .divider-dots {
+      text-align: center;
+      color: #D1D5DB;
+      font-size: 22px;
+      letter-spacing: 10px;
+      margin: 40px 0;
+    }
+
+    /* ── Closing quote ──────────────────────────────────────────────── */
+    .closing-quote {
+      background: linear-gradient(135deg, #1A1A2E 0%, #4C1D95 100%);
+      border-radius: 14px;
+      padding: 36px 32px;
+      margin: 48px 0 32px;
+      text-align: center;
+    }
+
+    .closing-quote p {
+      font-family: "Georgia", serif;
+      font-size: clamp(17px, 3vw, 21px);
+      color: #F9FAFB;
+      line-height: 1.6;
+      margin-bottom: 0;
+      font-style: italic;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────────────── */
+    .footer {
+      background: #F9FAFB;
+      border-top: 1px solid #E5E7EB;
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    .footer-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .tag {
+      font-family: "Inter", sans-serif;
+      font-size: 12px;
+      color: #6B7280;
+      background: #F3F4F6;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid #E5E7EB;
+    }
+
+    .footer-text {
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      color: #9CA3AF;
+    }
+
+    /* ── Responsive ─────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .pipeline { flex-direction: column; }
+      .pipeline-arrow { transform: rotate(90deg); align-self: center; }
+      .metrics-row { grid-template-columns: 1fr 1fr; }
+      .compare-table { font-size: 12px; }
+      .compare-table td, .compare-table th { padding: 9px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════ HERO -->
+<div class="hero">
+  <div class="hero-tag">Cloud Systems Research · PBCP</div>
+  <h1>Beyond CPU Thresholds: Using Intent-Fit Score to Detect Cloud Workload Misalignment</h1>
+  <p class="hero-subtitle">
+    Why utilization metrics often measure symptoms rather than causes — and how intent-aware scoring changes what you can detect.
+  </p>
+  <div class="author-row">
+    <div class="author-avatar">SK</div>
+    <div class="author-info">
+      <span class="author-name">Sreeja Katta</span>
+      <span class="author-meta">Systems Researcher · PBCP Project</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ BODY -->
+<div class="container">
+<div class="article-body">
+
+<!-- ─── Opening story ────────────────────────────────────────────────────── -->
+<p>
+  The alert never fired. The dashboard stayed green. The monitoring system reported CPU utilization at a healthy 71%, well above the underutilization threshold.
+</p>
+<p>
+  But something was wrong.
+</p>
+<p>
+  The workload had been submitted as a lightweight data validation job — expected to complete in 20 minutes on a small cluster. Six hours later it was still running, consuming 14 nodes, and had quietly accumulated over $200 in compute charges. The CPU number was technically accurate. The job was busy. It just wasn't doing what it was supposed to do.
+</p>
+<p>
+  Traditional monitoring had no way to know the difference. It was measuring <em>how much</em> the workload was using resources. It had no model of <em>what</em> the workload was supposed to be.
+</p>
+
+<div class="callout">
+  <p>"What if utilization metrics are measuring symptoms — and the actual disease is something they were never designed to see?"</p>
+</div>
+
+<p>
+  This question is the starting point for the work described here. It comes from <strong>PBCP — Pre-Billing Cost Prevention</strong>, a cloud governance research project I developed with <strong>Keerthi Rapolu</strong>. Keerthi led the pre-billing prevention architecture: the simulation engine, the Cost Prevention Score (CPS), the decision-theoretic intervention model, the runtime correction system, and the policy learning loop. My contribution focused on the measurement and intelligence layer: the Intent-Fit Score (IFS), the Intent-Behavior Divergence (IBD) framework, the anomaly detector, the root cause analyzer, and the prevention feedback loop that connects detected failures back to future policy.
+</p>
+<p>
+  This article is about that measurement layer — why it was needed, how it works, and what it reveals that CPU thresholds cannot.
+</p>
+
+<!-- ─── Resources ─────────────────────────────────────────────────────────── -->
+<div class="resource-box">
+  <div class="resource-box-title">Project Resources</div>
+  <div class="resource-links">
+    <a href="https://github.com/sreejakatta93/intent-aware-cloud-governance" class="resource-link">
+      <div class="resource-icon" style="background:#1A1A2E;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      </div>
+      <div class="resource-link-text">
+        <span class="resource-link-label">GitHub Repository</span>
+        <span class="resource-link-desc">Full source code, experiments, and benchmark · sreejakatta93/intent-aware-cloud-governance</span>
+      </div>
+    </a>
+    <a href="https://github.com/sreejakatta93/intent-aware-cloud-governance/blob/main/paper/PBCP_Pre_Billing_Cost_Prevention.pdf" class="resource-link">
+      <div class="resource-icon" style="background:#7C3AED;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      </div>
+      <div class="resource-link-text">
+        <span class="resource-link-label">Research Paper</span>
+        <span class="resource-link-desc">PBCP: Pre-Billing Cost Prevention for Intent-Aware Cloud Governance</span>
+      </div>
+    </a>
+    <a href="https://intent-aware-cloud-governance.streamlit.app/" class="resource-link">
+      <div class="resource-icon" style="background:#E11D48;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </div>
+      <div class="resource-link-text">
+        <span class="resource-link-label">Live Interactive Demo</span>
+        <span class="resource-link-desc">Run workload scenarios and explore IFS, anomaly detection, and prevention results</span>
+      </div>
+    </a>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ─── Section 1 ─────────────────────────────────────────────────────────── -->
+<h2><span class="section-num">01</span><br/>The Limits of CPU-Based Monitoring</h2>
+
+<p>
+  CPU utilization is a measure of busyness. It tells you how hard a processor is working. It does not tell you whether the work being done is the right work, at the right scale, for the right duration.
+</p>
+<p>
+  The dominant approach to cloud anomaly detection relies on thresholds applied to utilization metrics: if CPU drops below 20%, the workload is flagged as idle waste. If it stays above 60%, the system is considered healthy. This model has real value — it catches the obvious case where a cluster is running completely unloaded.
+</p>
+<p>
+  But it misses an entire category of failure.
+</p>
+
+<div class="callout-warn">
+  <div class="callout-title">The Threshold Blind Spot</div>
+  <p>A workload can show 65% CPU utilization, pass every monitoring check, and still be consuming 4× the resources it needs — simply because it was miscategorized, over-provisioned, or is running 8 hours past its expected completion time.</p>
+</div>
+
+<p>
+  Consider three scenarios where CPU thresholds generate false confidence:
+</p>
+
+<table class="compare-table">
+  <thead>
+    <tr>
+      <th>Scenario</th>
+      <th>CPU Reading</th>
+      <th>What's Actually Happening</th>
+      <th>Threshold Alert?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Runaway ML job</td>
+      <td class="win">68% (healthy)</td>
+      <td>Training diverged, running 6× longer than declared</td>
+      <td class="lose">No alert</td>
+    </tr>
+    <tr>
+      <td>Over-provisioned ETL</td>
+      <td class="win">55% (acceptable)</td>
+      <td>20 nodes doing work that 6 could handle</td>
+      <td class="lose">No alert</td>
+    </tr>
+    <tr>
+      <td>Mislabeled batch job</td>
+      <td class="win">71% (healthy)</td>
+      <td>Declared as "lightweight validation", behaving like ML training</td>
+      <td class="lose">No alert</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  In each case, the resource is being used. The utilization number looks reasonable. The threshold model has no mechanism to ask: <em>is this workload doing what it said it would do?</em>
+</p>
+
+<!-- ─── Section 2 ─────────────────────────────────────────────────────────── -->
+<h2><span class="section-num">02</span><br/>The Intent Gap</h2>
+
+<p>
+  When a workload is submitted to a cloud scheduler, it carries a declaration — explicit or implicit — of what it intends to do. A job description like <em>"nightly ETL transformation, 500GB source data, expected runtime 90 minutes"</em> contains information that monitoring systems almost universally ignore. It gets logged, maybe, and then discarded.
+</p>
+<p>
+  The intent gap is the space between what a workload declares and what it actually does. It is not always a sign of malice or error — workloads diverge from their declared intent for many legitimate reasons: data volume changes, upstream schema shifts, model training that runs longer than expected, or resource requirements that weren't accurately known at submission time.
+</p>
+<p>
+  But the intent gap is also exactly where cloud waste hides.
+</p>
+
+<div class="callout-insight">
+  <div class="callout-title">Core Observation</div>
+  <p>Cloud waste is not primarily caused by idle resources. It is primarily caused by <strong>resources doing the wrong thing at the wrong scale for the wrong duration</strong> — all of which are invisible to utilization-only monitoring.</p>
+</div>
+
+<p>
+  The key insight is that intent is measurable. If you embed a natural-language workload description into a vector space, and separately embed a representation of its observed runtime behavior, the cosine distance between those two vectors is a quantifiable measure of how well the workload kept its own promise.
+</p>
+<p>
+  That is the foundation of IFS.
+</p>
+
+<!-- ─── Section 3 ─────────────────────────────────────────────────────────── -->
+<h2><span class="section-num">03</span><br/>Intent-Behavior Divergence</h2>
+
+<p>
+  <strong>Intent-Behavior Divergence (IBD)</strong> is the formal framework for classifying workloads whose runtime behavior significantly departs from their declared intent. A workload is classified as exhibiting IBD when its Intent-Fit Score falls below a threshold — specifically, IFS &lt; 0.65 in our benchmark.
+</p>
+<p>
+  IBD manifests in three primary patterns:
+</p>
+
+<h3>Type Mismatch</h3>
+<p>
+  A workload declared as one class (e.g., <code>batch</code>) behaves at runtime like another class (e.g., <code>ml_training</code>). This is the most consequential divergence type because the two classes often have fundamentally different resource requirements, expected durations, and cost profiles. A scheduler that provisions for a batch job and gets ML training behavior will almost certainly produce waste or failure.
+</p>
+
+<h3>Resource Mismatch</h3>
+<p>
+  The workload uses significantly more or fewer resources than its declared intent predicted. An over-provision factor of 2× or higher — requesting 20 nodes for work that uses 6 — is the single largest driver of avoidable cloud cost in our benchmark.
+</p>
+
+<h3>Duration Overrun</h3>
+<p>
+  The workload runs substantially longer than its declared expected duration. A job that declares a 2-hour runtime and runs for 14 hours accumulates unbounded cost — often past any budget owner's monitoring window.
+</p>
+
+<div class="callout">
+  <p>IBD is not a failure of the workload in isolation. It is a failure of the governance system to detect and respond to the divergence before the cost is incurred.</p>
+</div>
+
+<!-- ─── Section 4 ─────────────────────────────────────────────────────────── -->
+<h2><span class="section-num">04</span><br/>Introducing Intent-Fit Score (IFS)</h2>
+
+<p>
+  IFS is defined as the cosine similarity between two embeddings: the <strong>intent embedding</strong> derived from the workload's natural-language description, and the <strong>behavior embedding</strong> derived from observed runtime telemetry.
+</p>
+
+<div class="formula-block">
+  <code>IFS = cosine_similarity( embed(intent_description), embed(runtime_behavior) )</code>
+  <span class="formula-label">IFS ∈ [0, 1] · Higher values indicate stronger alignment between declared intent and observed behavior</span>
+</div>
+
+<p>
+  For transparency and diagnostics, IFS is surfaced through four interpretable sub-scores that reflect the dimensions most relevant to cloud waste detection:
+</p>
+
+<div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; padding:22px 24px; margin:28px 0;">
+  <div class="score-bar-row">
+    <div class="score-bar-label">Type alignment <span class="score-bar-weight">weight: 0.35</span></div>
+    <div class="score-bar-track"><div class="score-bar-fill" style="width:35%;"></div></div>
+  </div>
+  <div style="font-family:Inter,sans-serif;font-size:12px;color:#6B7280;margin:4px 0 16px 0;">Declared workload class vs. inferred class from runtime behavior</div>
+
+  <div class="score-bar-row">
+    <div class="score-bar-label">Utilization alignment <span class="score-bar-weight">weight: 0.25</span></div>
+    <div class="score-bar-track"><div class="score-bar-fill" style="width:25%;"></div></div>
+  </div>
+  <div style="font-family:Inter,sans-serif;font-size:12px;color:#6B7280;margin:4px 0 16px 0;">Predicted CPU utilization vs. observed utilization</div>
+
+  <div class="score-bar-row">
+    <div class="score-bar-label">Duration alignment <span class="score-bar-weight">weight: 0.20</span></div>
+    <div class="score-bar-track"><div class="score-bar-fill" style="width:20%;"></div></div>
+  </div>
+  <div style="font-family:Inter,sans-serif;font-size:12px;color:#6B7280;margin:4px 0 16px 0;">Expected job duration vs. actual completion time</div>
+
+  <div class="score-bar-row">
+    <div class="score-bar-label">Resource alignment <span class="score-bar-weight">weight: 0.20</span></div>
+    <div class="score-bar-track"><div class="score-bar-fill" style="width:20%;"></div></div>
+  </div>
+  <div style="font-family:Inter,sans-serif;font-size:12px;color:#6B7280;margin:4px 0 4px 0;">Over-provision factor relative to declared resource requirements</div>
+</div>
+
+<h3>IFS Thresholds</h3>
+<p>
+  The IFS range maps to operational categories with distinct governance implications:
+</p>
+
+<div class="threshold-band">
+  <div class="threshold-row">
+    <div class="threshold-dot" style="background:#059669;"></div>
+    <div class="threshold-range">≥ 0.85</div>
+    <div class="threshold-label">Well-aligned</div>
+    <div class="threshold-action">No action needed</div>
+  </div>
+  <div class="threshold-row">
+    <div class="threshold-dot" style="background:#84CC16;"></div>
+    <div class="threshold-range">0.70 – 0.85</div>
+    <div class="threshold-label">Minor divergence</div>
+    <div class="threshold-action">Log and monitor</div>
+  </div>
+  <div class="threshold-row">
+    <div class="threshold-dot" style="background:#F59E0B;"></div>
+    <div class="threshold-range">0.65 – 0.70</div>
+    <div class="threshold-label">Significant divergence</div>
+    <div class="threshold-action">Flag for review</div>
+  </div>
+  <div class="threshold-row">
+    <div class="threshold-dot" style="background:#EF4444;"></div>
+    <div class="threshold-range">&lt; 0.65</div>
+    <div class="threshold-label">IBD alert</div>
+    <div class="threshold-action">Trigger anomaly pipeline</div>
+  </div>
+  <div class="threshold-row">
+    <div class="threshold-dot" style="background:#7C3AED;"></div>
+    <div class="threshold-range">&lt; 0.50</div>
+    <div class="threshold-label">Severe divergence</div>
+    <div class="threshold-action">Immediate intervention</div>
+  </div>
+</div>
+
+<!-- ─── Section 5 ─────────────────────────────────────────────────────────── -->
+<h2><span class="section-num">05</span><br/>Why Alignment Matters</h2>
+
+<p>
+  The core claim of IFS is that workload alignment — not just utilization level — predicts cloud waste more accurately and more early. To understand why, consider what a high-IFS workload looks like versus a low-IFS one.
+</p>
+<p>
+  A workload with IFS of 0.96 submitted resources close to what it actually needed, ran roughly as long as it said it would, and behaved like the type of job it declared. Its cost was predictable. Its resource footprint was appropriate. Any governance system handling it well could do so with minimal intervention.
+</p>
+<p>
+  A workload with IFS of 0.41 is a different story. It may have high CPU utilization — the resource is being used — but the pattern of that use looks nothing like what the workload declared. It is running the wrong kind of computation, at the wrong scale, for much longer than planned. The cost it is accumulating was not anticipated. The governance system that approved its provisioning did so based on a description that turned out to be inaccurate.
+</p>
+
+<div class="callout-insight">
+  <div class="callout-title">The Alignment Principle</div>
+  <p>Misaligned workloads are not just waste events. They are <strong>governance failures</strong> — cases where the system approved a resource request based on declared intent, and the actual behavior made that approval incorrect in retrospect.</p>
+</div>
+
+<p>
+  This reframing matters because it changes what governance needs to measure. A system that only measures utilization will catch idle resources. A system that measures alignment will catch workloads that are actively using resources for the wrong purpose — which is where the larger and more consequential waste lives.
+</p>
+
+<!-- ─── Section 6 ─────────────────────────────────────────────────────────── -->
+<h2><span class="section-num">06</span><br/>Detecting Anomalies Earlier</h2>
+
+<p>
+  With IFS defined, the anomaly detection problem becomes a classification task: given a workload's IFS trajectory over time, predict whether it is exhibiting IBD.
+</p>
+<p>
+  The IFS-based detector was compared against a CPU-threshold baseline — the standard approach used in most cloud monitoring tools — on a benchmark of 500 workloads with controlled anomaly injection.
+</p>
+
+<div class="metrics-row">
+  <div class="metric-card">
+    <span class="metric-value">0.7608</span>
+    <div class="metric-label">IFS Detector F1</div>
+    <div class="metric-context">Exp 3 benchmark result</div>
+  </div>
+  <div class="metric-card">
+    <span class="metric-value" style="color:#9CA3AF;">0.6054</span>
+    <div class="metric-label">CPU Threshold F1</div>
+    <div class="metric-context">Baseline comparison</div>
+  </div>
+  <div class="metric-card">
+    <span class="metric-value">+26%</span>
+    <div class="metric-label">F1 Improvement</div>
+    <div class="metric-context">IFS vs. CPU threshold</div>
+  </div>
+</div>
+
+<p>
+  The recall improvement was larger than the precision improvement. This is the important number. Recall measures the fraction of actual anomalies that the detector correctly identifies — and the IFS-based detector catches significantly more of them than a threshold approach.
+</p>
+<p>
+  The reason is structural. CPU thresholds can only flag anomalies that manifest as utilization outliers. A workload that maintains moderate CPU while running 6 hours past its expected completion will not trigger a CPU alert. Its IFS, however, will begin degrading from the first hour of overrun as the duration sub-score pulls the alignment score down. The signal is available earlier, and it does not require the anomaly to express itself in a single metric channel.
+</p>
+
+<div class="callout-warn">
+  <div class="callout-title">Benchmark Note</div>
+  <p>These results are from a controlled synthetic benchmark with calibrated anomaly injection. The absolute numbers are illustrative; the directional signal — that semantic alignment improves detection over single-metric thresholding — is the finding that should be generalized.</p>
+</div>
+
+<!-- ─── Section 7 ─────────────────────────────────────────────────────────── -->
+<h2><span class="section-num">07</span><br/>Root Cause Analysis</h2>
+
+<p>
+  Detecting that a workload has diverged is necessary but not sufficient for actionable governance. Knowing <em>why</em> it diverged is what makes the detection useful.
+</p>
+<p>
+  The Root Cause Analyzer (RCA) takes a flagged IBD workload and attributes the divergence to one or more root cause categories using the IFS sub-score decomposition. Because each sub-score corresponds to a measurable dimension of alignment — type, utilization, duration, resource — the sub-score that contributes most to the IFS drop identifies the most likely root cause.
+</p>
+
+<table class="compare-table">
+  <thead>
+    <tr>
+      <th>Root Cause</th>
+      <th>Driving Sub-Score</th>
+      <th>Governance Implication</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Type mismatch</strong></td>
+      <td>Type alignment drop</td>
+      <td>Workload was submitted under the wrong class; provisioning policy was wrong from the start</td>
+    </tr>
+    <tr>
+      <td><strong>Over-provisioning</strong></td>
+      <td>Resource alignment drop</td>
+      <td>Node count was excessive for actual utilization; right-sizing would have prevented waste</td>
+    </tr>
+    <tr>
+      <td><strong>Duration overrun</strong></td>
+      <td>Duration alignment drop</td>
+      <td>Job ran far beyond declared time; runtime termination policy should have triggered earlier</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  The output of RCA is not just a classification — it is an explanation in plain language that can be surfaced to the team responsible for the workload. Instead of "this job was flagged as anomalous," the system can say: "this job was submitted as a batch workload but exhibited ML training behavior, which caused it to run 4× longer than its declared duration at a resource footprint 3× what was needed."
+</p>
+<p>
+  That is a governance event that can be acted on. The generic alert cannot.
+</p>
+
+<!-- ─── Section 8 ─────────────────────────────────────────────────────────── -->
+<h2><span class="section-num">08</span><br/>Prevention Feedback Loops</h2>
+
+<p>
+  Detection and RCA produce value on their own. But the more significant contribution of the IBD framework is what happens next: low-IFS workloads feed a prevention feedback loop that improves future governance decisions.
+</p>
+
+<div class="pipeline">
+  <div class="pipeline-step">
+    <span class="pipeline-step-icon">📥</span>
+    <div class="pipeline-step-title">Workload Submission</div>
+    <div class="pipeline-step-desc">Natural language description + resource request</div>
+  </div>
+  <div class="pipeline-arrow">›</div>
+  <div class="pipeline-step">
+    <span class="pipeline-step-icon">📊</span>
+    <div class="pipeline-step-title">IFS Computation</div>
+    <div class="pipeline-step-desc">Intent vs. behavior alignment scored post-execution</div>
+  </div>
+  <div class="pipeline-arrow">›</div>
+  <div class="pipeline-step">
+    <span class="pipeline-step-icon">🔍</span>
+    <div class="pipeline-step-title">IBD Detection</div>
+    <div class="pipeline-step-desc">IFS &lt; 0.65 triggers anomaly classification + RCA</div>
+  </div>
+  <div class="pipeline-arrow">›</div>
+  <div class="pipeline-step">
+    <span class="pipeline-step-icon">📚</span>
+    <div class="pipeline-step-title">Pattern Tracking</div>
+    <div class="pipeline-step-desc">Recurring failures logged with root cause signature</div>
+  </div>
+  <div class="pipeline-arrow">›</div>
+  <div class="pipeline-step">
+    <span class="pipeline-step-icon">⚙️</span>
+    <div class="pipeline-step-title">Policy Synthesis</div>
+    <div class="pipeline-step-desc">≥ 3 occurrences → automatic prevention rule generated</div>
+  </div>
+</div>
+
+<p>
+  The key component is the <code>AnomalyPreventionFeedback</code> module, which watches for recurring IBD patterns. When the same anomaly signature appears three or more times with sufficient confidence (≥ 0.60), the system synthesizes a new prevention rule and adds it to the governance layer. The next workload that matches the pattern is intercepted before the waste occurs — not after.
+</p>
+
+<!-- ─── Section 9 ─────────────────────────────────────────────────────────── -->
+<h2><span class="section-num">09</span><br/>How Low-IFS Workloads Improve Future Policies</h2>
+
+<p>
+  There is a counterintuitive property of this system worth naming explicitly: <strong>low-IFS workloads are not just problems — they are information.</strong>
+</p>
+<p>
+  Every workload that diverges from its declared intent and triggers an IBD event contributes a labeled training example: this description, this submission pattern, this resource request produced this behavior. If that pattern recurs, the system now has evidence that the declared intent is systematically misleading for this class of workload.
+</p>
+<p>
+  This is how the intelligence layer connects to Keerthi's policy learning loop. The IBD events I track become the signal that drives Phase 3 convergence — the system learns not just from successful interventions, but from every case where alignment broke down and the governance system had to respond.
+</p>
+
+<div class="callout-insight">
+  <div class="callout-title">The Learning Connection</div>
+  <p>IFS turns failed workloads into governance training data. Each misalignment event that is correctly diagnosed makes the system harder to fool by the same pattern in the future.</p>
+</div>
+
+<p>
+  The embedding updates that happen after each IBD event also refine the FAISS retrieval index. Future workloads that describe themselves similarly to past divergers are retrieved with higher suspicion scores — their prior distributions are updated to reflect the known tendency for that description pattern to produce misaligned behavior.
+</p>
+
+<!-- ─── Section 10 ─────────────────────────────────────────────────────────── -->
+<h2><span class="section-num">10</span><br/>Key Results</h2>
+
+<p>
+  The results below are from a controlled benchmark of 500 workloads and 28,423 runs. They should be read as directional evidence, not production performance guarantees.
+</p>
+
+<div class="metrics-row">
+  <div class="metric-card">
+    <span class="metric-value">0.7608</span>
+    <div class="metric-label">IFS Detector F1</div>
+    <div class="metric-context">vs. 0.6054 CPU baseline</div>
+  </div>
+  <div class="metric-card">
+    <span class="metric-value">0.9809</span>
+    <div class="metric-label">Execution Success Rate</div>
+    <div class="metric-context">Workloads completing successfully</div>
+  </div>
+  <div class="metric-card">
+    <span class="metric-value">56×</span>
+    <div class="metric-label">CPS Improvement</div>
+    <div class="metric-context">Full PBCP vs. no-learning baseline</div>
+  </div>
+  <div class="metric-card">
+    <span class="metric-value">0.733</span>
+    <div class="metric-label">Peak CPS</div>
+    <div class="metric-context">With policy learning active</div>
+  </div>
+</div>
+
+<h3>On the detection result</h3>
+<p>
+  The F1 improvement from 0.6054 to 0.7608 is meaningful but not dramatic. The more important number is the recall improvement: IFS-based detection catches substantially more actual anomalies than a threshold approach. In governance systems, missing a real anomaly (false negative) is generally more expensive than flagging a healthy workload for review (false positive). Higher recall matters.
+</p>
+
+<h3>On the learning result</h3>
+<p>
+  The 56× improvement in peak CPS between Full PBCP and the No-Phase-3 baseline is the most striking number in the evaluation. It is not a result of better simulation or smarter thresholds — it is a result of the feedback loop connecting IBD events to policy updates. Static rules contribute little. Retrieval alone is useful. The combination of alignment tracking, anomaly detection, and policy synthesis is what produces the large separation.
+</p>
+
+<!-- ─── Section 11 ─────────────────────────────────────────────────────────── -->
+<h2><span class="section-num">11</span><br/>Lessons Learned</h2>
+
+<p>
+  A few things became clearer over the course of building and evaluating this system:
+</p>
+
+<p>
+  <strong>Intent is a richer signal than it appears.</strong> A natural-language job description contains information that is regularly discarded by scheduler systems. Encoding that description and comparing it to runtime behavior is a surprisingly effective diagnostic, even with a relatively simple embedding approach.
+</p>
+
+<p>
+  <strong>Sub-scores matter more than the aggregate.</strong> The composite IFS is useful for ranking workloads by alignment quality. But for RCA and for building governance policies, the sub-score decomposition is what makes the system actionable. A score of 0.50 caused by type mismatch requires a different response than a score of 0.50 caused by duration overrun.
+</p>
+
+<p>
+  <strong>Detection without action is incomplete.</strong> The IBD framework only becomes valuable when it is wired to the prevention feedback loop. An anomaly that is detected, labeled, and then forgotten is an opportunity cost. The same anomaly that seeds a prevention rule is a system improvement.
+</p>
+
+<p>
+  <strong>The boundary between measurement and prevention is artificial.</strong> The clearest lesson from this project is that governance quality is determined by what happens at the interface between the measurement layer and the prevention layer — not by optimizing either in isolation.
+</p>
+
+<!-- ─── Section 12 ─────────────────────────────────────────────────────────── -->
+<h2><span class="section-num">12</span><br/>Future Directions</h2>
+
+<p>
+  Several directions would meaningfully strengthen this work:
+</p>
+
+<p>
+  <strong>Real-trace calibration.</strong> The benchmark uses synthetic workloads calibrated against published cloud pricing. Running the IFS framework against actual organizational telemetry would validate whether the detection improvements hold under real behavioral distributions.
+</p>
+
+<p>
+  <strong>Stronger baselines.</strong> The CPU-threshold baseline is the most common approach in practice, but it is not the strongest possible baseline. Comparing against a statistical anomaly detector (e.g., isolation forest on telemetry features) would produce a more conservative estimate of IFS's contribution.
+</p>
+
+<p>
+  <strong>Streaming IFS.</strong> The current implementation computes IFS post-execution. An incremental IFS that updates as telemetry arrives — providing an alignment signal while a job is still running — would enable earlier runtime intervention.
+</p>
+
+<p>
+  <strong>Cross-organizational transfer.</strong> Policy rules synthesized from one organization's IBD patterns may partially generalize to others with similar workload profiles. Whether learned policies transfer is an open empirical question.
+</p>
+
+<div class="divider-dots">· · ·</div>
+
+<!-- ─── Companion box ─────────────────────────────────────────────────────── -->
+<div class="companion-box">
+  <div class="companion-title">Continue Reading</div>
+  <h3>The Prevention Side of PBCP</h3>
+  <p>
+    This article focused on workload alignment and anomaly intelligence — the measurement layer that makes governance decisions defensible. For the complementary perspective on how PBCP acts on that intelligence before billing begins, see Keerthi Rapolu's article covering:
+  </p>
+  <ul class="companion-list">
+    <li>Pre-Billing Cost Prevention Framework</li>
+    <li>Cost Prevention Score (CPS) and what it measures</li>
+    <li>Pre-execution simulation and why timing matters</li>
+    <li>Decision-theoretic intervention: BLOCK / AUTO_CORRECT / SUGGEST / PASS</li>
+    <li>Policy learning convergence — the 56× result explained from the prevention side</li>
+  </ul>
+  <a href="#" class="btn">Read Keerthi's Article →</a>
+</div>
+
+<!-- ─── Closing quote ─────────────────────────────────────────────────────── -->
+<div class="closing-quote">
+  <p>
+    The most expensive cloud failures are often visible long before they appear on a bill.<br/>
+    The challenge is learning how to recognize them.
+  </p>
+</div>
+
+<p style="text-align:center; font-family:'Inter',sans-serif; font-size:14px; color:#9CA3AF; margin-top:8px;">
+  — Sreeja Katta
+</p>
+
+</div><!-- /article-body -->
+</div><!-- /container -->
+
+<!-- ══════════════════════════════════════════════════════════════════ FOOTER -->
+<div class="footer">
+  <div class="footer-tags">
+    <span class="tag">Cloud Engineering</span>
+    <span class="tag">Data Governance</span>
+    <span class="tag">Anomaly Detection</span>
+    <span class="tag">Machine Learning</span>
+    <span class="tag">Cloud Cost Optimization</span>
+    <span class="tag">MLOps</span>
+    <span class="tag">Intent-Fit Score</span>
+    <span class="tag">PBCP</span>
+  </div>
+  <p class="footer-text">
+    Part of the PBCP research project · Sreeja Katta &amp; Keerthi Rapolu ·
+    <a href="https://github.com/sreejakatta93/intent-aware-cloud-governance"
+       style="color:#7C3AED; text-decoration:none;">GitHub</a>
+  </p>
+</div>
+
+</body>
+</html>
